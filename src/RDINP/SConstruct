@@ -1,0 +1,34 @@
+## -*- python -*-
+## feff85exafs build system based on scons
+## see HEADERS/license.h for license information
+
+import sys, os
+sys.path.append('..')
+from FeffBuild import CompilationEnvironment, InstallEnvironment, FindOtherObjects
+from   os.path   import realpath, join
+
+try:
+    Import('env')
+except:
+    env  = CompilationEnvironment()
+ienv = InstallEnvironment()
+
+bin_src = ['rdinp_l.f', 'ffsort.f', 'iniall.f', 'mkptz.f', 'rdline.f', 'setedg.f', 'wrtall.f', 'wrtjsn.f']
+libs    = [join('..', 'json-fortran', 'libjsonfortran.a'),
+           join('..', 'COMMON', 'libfeffcom.a'),
+           join('..', 'PAR',    'libfeffpar.a'),
+           join('..', 'MATH',   'libfeffmath.a'),
+           join('..', 'JSON',   'libfeffjson.a'),
+       ]
+
+deps = ('COMMON/wlog', 'COMMON/str', 'PAR/sequential')
+
+env.Program('rdinp', bin_src + libs)
+
+## needed for libonepath and libfeffpath shared objects
+if os.name != 'nt':
+    env.SharedObject('mkptz'+env['SHOBJSUFFIX'], source='mkptz.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+
+env.Install(ienv['i_bin'], 'rdinp'+env['PROGSUFFIX'])
+
+env.Alias('install', ienv['i_bin'])

@@ -1,0 +1,54 @@
+## -*- python -*-
+## feff85exafs build system based on scons
+## see HEADERS/license.h for license information
+
+import sys, os
+sys.path.append('..')
+from FeffBuild import CompilationEnvironment, InstallEnvironment, FindOtherObjects
+from   os.path   import realpath, join
+
+try:
+    Import('env')
+except:
+    env  = CompilationEnvironment()
+ienv = InstallEnvironment()
+
+## Quiet compiler warnings on LAPACK and other well-tested files
+flags = env['FORTRANFLAGS']
+env['FORTRANFLAGS'] = flags.replace('-Wall', '')
+
+lib_src = ['bcoef.f', 'besjn.f', 'conv.f', 'csomm.f', 'cwig3j.f', 'determ.f', 'exjlnl.f', 'phamp.f',
+           'quartc.f', 'sdist.f', 'somm2.f', 'terp.f', 'trap.f', 'besjh.f', 'bjnser.f', 'cpl0.f',
+           'csomm2.f', 'czeros.f', 'dist.f', 'lu.f', 'polint.f', 'rotwig.f', 'somm.f', 'strap.f', 
+           'terpc.f']
+
+
+deps = ('COMMON/wlog', 'COMMON/str', 'COMMON/chopen', 'PAR/sequential')
+
+env.Library('libfeffmath', lib_src) # + FindOtherObjects(deps, env))
+
+## needed for libonepath and libfeffpath shared objects
+if os.name != 'nt':
+    env.SharedObject('bcoef' +env['SHOBJSUFFIX'], source='bcoef.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('besjh' +env['SHOBJSUFFIX'], source='besjh.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('besjn' +env['SHOBJSUFFIX'], source='besjn.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('bjnser'+env['SHOBJSUFFIX'], source='bjnser.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('csomm' +env['SHOBJSUFFIX'], source='csomm.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('csomm2'+env['SHOBJSUFFIX'], source='csomm2.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('cwig3j'+env['SHOBJSUFFIX'], source='cwig3j.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('czeros'+env['SHOBJSUFFIX'], source='czeros.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('determ'+env['SHOBJSUFFIX'], source='determ.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('dist'  +env['SHOBJSUFFIX'], source='dist.f',   FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('exjlnl'+env['SHOBJSUFFIX'], source='exjlnl.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('lu'    +env['SHOBJSUFFIX'], source='lu.f',     FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('phamp' +env['SHOBJSUFFIX'], source='phamp.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('polint'+env['SHOBJSUFFIX'], source='polint.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('rotwig'+env['SHOBJSUFFIX'], source='rotwig.f', FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('somm'  +env['SHOBJSUFFIX'], source='somm.f',   FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('somm2' +env['SHOBJSUFFIX'], source='somm2.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('terp'  +env['SHOBJSUFFIX'], source='terp.f',   FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('terpc' +env['SHOBJSUFFIX'], source='terpc.f',  FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+    env.SharedObject('trap'  +env['SHOBJSUFFIX'], source='trap.f',   FORTRANFLAGS = env['FORTRANFLAGS']+' -fPIC')
+
+#env.Install(ienv['i_lib'], 'libfeffmath' + env['SHLIBSUFFIX'])
+#env.Alias('install', ienv['i_lib'])

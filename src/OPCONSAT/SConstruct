@@ -1,0 +1,111 @@
+## -*- python -*-
+## feff85exafs build system based on scons
+## see HEADERS/license.h for license information
+
+import sys
+sys.path.append('..')
+from FeffBuild import CompilationEnvironment, InstallEnvironment, FindOtherObjects
+from distutils.spawn import find_executable
+import os, re
+from   os.path   import realpath, join, isdir
+
+try:
+    Import('env')
+except:
+    env  = CompilationEnvironment()
+here = os.getcwd()
+ienv = InstallEnvironment()
+
+if env['FORTRAN'] == 'gfortran':
+    env = Environment(F90FLAGS = '-O2 -fbacktrace -g -Wall -Wextra -Wno-maybe-uninitialized -J'+here,
+                      FORTRANFLAGS = '-O2 -fbacktrace -g -Wall -Wextra -Wno-maybe-uninitialized -J'+here )
+                      #FORTRANFLAGS = env['FORTRANFLAGS'] )
+    # several "Unused dummy argument" warnings remain: padio, iomod, and atomicpotio
+elif env['FORTRAN'] == 'ifort':
+    env = Environment(F90FLAGS = '-O2 -warn -stand f08 -diag-disable 7601 -traceback -module '+here,
+                      FORTRANFLAGS = env['FORTRANFLAGS'] )
+
+lib_src = [
+    'eps.f90',
+    'getelement.f90',
+
+    'oca_atoms_inp.f90',
+    'oca_geometry_inp.f90',
+    'oca_global_inp.f90',
+    'oca_opcons_inp.f90',
+    'oca_potential_inp.f90',
+
+    'oca_atomicpotio.f90',
+    'oca_constants.f90',
+    'oca_dimsmod.f90',
+    'oca_errorfile.f90',
+    'oca_errormod.f90',
+    'oca_iofiles.f90',
+    'oca_iomod.f90',
+    'oca_kinds.f90',
+    'oca_mtdp.f90',
+    'oca_padio.f90',
+    'oca_par.f90',
+
+    'bwords_nc.f',
+]
+
+## The following were extracted from opconsat_tot.f90 and not used by opconsat or eps2exc
+## each of these is a re-implementation in f90 (for some reason) of
+## the f77 routines for reading feff's old-style intermediate files
+    #'oca_compton_inp.f90',
+    #'oca_eels_inp.f90',
+    #'oca_ff2x_inp.f90',
+    #'oca_fms_inp.f90',
+    #'oca_genfmt_inp.f90',
+    #'oca_ldos_inp.f90',
+    #'oca_paths_inp.f90',
+    #'oca_reciprocal_inp.f90',
+    #'oca_screen_inp.f90',
+    #'oca_sfconv_inp.f90',
+    #'oca_xsph_inp.f90',
+
+## also not used here (extracted from opconsat_tot.f90)
+    #'oca_controls.f90',
+    #'oca_kklist.f90',
+    #'oca_strfacs.f90',
+    #'oca_struct.f90',
+    
+
+
+#deps = ('COMMON/wlog', 'COMMON/str', 'COMMON/pertab', 'COMMON/getxk', 'COMMON/rdxsph',
+#        'COMMON/setkap', 'COMMON/chopen', 'COMMON/padlib',
+#        'PAR/sequential', 'MATH/trap', 'MATH/bcoef', 'MATH/cwig3j', 'MATH/rotwig')
+
+env.Library('libfeffopconsat', lib_src) # + FindOtherObjects(deps, env))
+#env.SharedLibrary('libfeffopconsat', lib_src) # + FindOtherObjects(deps, env))
+
+
+
+bin_src = ['opconsat.f90']
+libs = ['libfeffopconsat' + env['LIBSUFFIX'],
+        join('..', 'JSON',         'libfeffjson'    + env['LIBSUFFIX']),
+        join('..', 'json-fortran', 'libjsonfortran' + env['LIBSUFFIX']),
+        join('..', 'COMMON',       'libfeffcom'     + env['LIBSUFFIX']),
+        join('..', 'PAR',          'libfeffpar'     + env['LIBSUFFIX']),
+        join('..', 'MATH',         'libfeffmath'    + env['LIBSUFFIX']),
+    ]
+
+env.SharedLibrary('libfeffloss', ['libfeffloss.f','e2emisc.f','eps.f90'])
+
+# json = [ join('..', 'JSON',   'json_read_libpotph' + env['SHOBJSUFFIX']),
+#          join('..', 'JSON',   'bailout'            + env['SHOBJSUFFIX'])]
+# env.Program('loss', ['loss.f', 'libfeffloss.a'] +
+#             json +
+#             [join('..', 'POT', 'inipotph.f'), join('..', 'json-fortran', 'libjsonfortran.a')] +
+#             libs)
+
+env.Program('opconsat', bin_src+['e2emisc.f']+libs)
+
+e2e_src = ['e2emisc.f', 'rdloss.f']
+env.Program('eps2exc', ['eps2exc.f', e2e_src, join('..', 'MATH',   'libfeffmath.a'), join('..', 'COMMON',   'libfeffcom.a'),])
+
+env.Install(ienv['i_bin'], 'opconsat'+env['PROGSUFFIX'])
+env.Install(ienv['i_bin'], 'eps2exc'+env['PROGSUFFIX'])
+env.Install(ienv['i_lib'], 'libfeffloss'+env['SHLIBSUFFIX'])
+

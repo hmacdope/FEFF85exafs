@@ -1,0 +1,31 @@
+## -*- python -*-
+## feff85exafs build system based on scons
+## see HEADERS/license.h for license information
+
+import sys
+sys.path.append('..')
+from FeffBuild import CompilationEnvironment, InstallEnvironment
+from   os.path   import realpath, join
+
+try:
+    Import('env')
+except:
+    env  = CompilationEnvironment()
+ienv = InstallEnvironment()
+
+bin_src = Split('ffmod4.f   ccrit.f   heap.f    ipack.f   mcrith.f  mcritk.f  mpprmd.f \
+                 mpprmp.f   mrb.f     outcrt.f  repath.f  paths.f   pathsd.f  phash.f  \
+                 prcrit.f   sortix.f  timrep.f')
+
+libs = [join('..', 'json-fortran', 'libjsonfortran.a'),
+        join('..', 'COMMON', 'libfeffcom.a'),
+        join('..', 'PAR',    'libfeffpar.a'),
+        join('..', 'MATH',   'libfeffmath.a'),
+        join('..', 'JSON',   'libfeffjson.a'),
+    ]
+
+env.Program('pathfinder', bin_src + libs)
+
+env.Install(ienv['i_bin'], 'pathfinder'+env['PROGSUFFIX'])
+env.Alias('install', ienv['i_bin'])
+

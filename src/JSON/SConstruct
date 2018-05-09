@@ -1,0 +1,23 @@
+## -*- python -*-
+## feff85exafs build system based on scons
+## see HEADERS/license.h for license information
+
+import sys
+sys.path.append('..')
+from FeffBuild import CompilationEnvironment, InstallEnvironment
+from   os.path   import realpath, join
+
+try:
+    Import('env')
+except:
+    env  = CompilationEnvironment()
+ienv = InstallEnvironment()
+
+lib_src = ['bailout.f', 'read_geom.f', 'read_atoms.f', 'read_global.f', 'read_pot.f', 'read_fpf0.f',
+           'json_xsect.f', 'read_xsect.f', 'json_nnnn.f']
+
+env.Library('libfeffjson', lib_src)
+
+env.SharedObject('json_read_libpotph' + env['SHOBJSUFFIX'], 'json_read_libpotph.f')
+env.SharedObject('json_xsect'         + env['SHOBJSUFFIX'], 'json_xsect.f')
+env.SharedObject('bailout'            + env['SHOBJSUFFIX'], 'bailout.f')
